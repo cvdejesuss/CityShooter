@@ -15,11 +15,12 @@ class Enemy(Entity):
 
     def move(self):
         self.rect.centerx -= ENTITY_SPEED[self.name]
+        self.rect.centery += random.choice([-1, 0, 1])  # Pequena variação no eixo Y
 
     def shoot(self):
         current_time = pygame.time.get_ticks()  # Obtém o tempo atual em milissegundos
 
-        # Gera um intervalo aleatório entre 5s e 8s (3 e 4 segundos)
+        # Gera um intervalo aleatório entre 5s e 8s
         shoot_interval = random.randint(self.min_shoot_interval, self.max_shoot_interval)
 
         # Verifica se o tempo passado é maior ou igual ao intervalo aleatório
