@@ -70,8 +70,8 @@ class Level:
 
             pygame.display.flip()
 
-            # Collisions
-            EntityMediator.verify_collision(entity_list=self.entity_list)
+            # Collisions - Passando explosion_sound para verify_collision
+            EntityMediator.verify_collision(entity_list=self.entity_list, explosion_sound=self.explosion_sound)
             EntityMediator.verify_health(entity_list=self.entity_list, explosion_sound=self.explosion_sound)
 
     def display_health(self):
