@@ -4,53 +4,85 @@ from code.EnemyShot import EnemyShot
 from code.Entity import Entity
 from code.Player import Player
 from code.PlayerShot import PlayerShot
-
+from code.Explosion import Explosion
 
 class EntityMediator:
-
     @staticmethod
     def __verify_collision_window(ent: Entity):
+        # Se a entidade passar da borda da tela, a saúde deve ser zerada
         if isinstance(ent, Enemy):
-            if ent.rect.right <= 0:
+            if ent.rect.right <= 0:  # Se o inimigo saiu pela borda esquerda
                 ent.health = 0
-        if isinstance(ent, PlayerShot):
-            if ent.rect.left > WIN_WIDTH:
+        elif isinstance(ent, PlayerShot):
+            if ent.rect.left > WIN_WIDTH:  # Se o tiro do jogador saiu pela borda direita
                 ent.health = 0
-        if isinstance(ent, EnemyShot):
-            if ent.rect.right <= 0:
+        elif isinstance(ent, EnemyShot):
+            if ent.rect.right <= 0:  # Se o tiro inimigo saiu pela borda esquerda
                 ent.health = 0
 
     @staticmethod
     def verify_collision(entity_list: list[Entity]):
-        for i in range(len(entity_list)):
-            test_entity = entity_list[i]
-            EntityMediator.__verify_collision_window(test_entity)
+        to_remove = []  # Lista para armazenar entidades que devem ser removidas
 
-            # Colisões entre Player e Inimigo
-            if isinstance(test_entity, Player):
+        for i in range(len(entity_list)):
+            entity1 = entity_list[i]
+
+            # Verificação de colisões com o jogador
+            if isinstance(entity1, Player):
                 for other in entity_list:
                     if isinstance(other, EnemyShot):
-                        if test_entity.rect.colliderect(other.rect):
-                            test_entity.health -= 10  # Subtrai 10 de saúde do Player quando atingido por um tiro inimigo
-                            other.health = 0  # O tiro do inimigo desaparece após atingir o Player
-                    if isinstance(other, Enemy):
-                        if test_entity.rect.colliderect(other.rect):
-                            test_entity.health -= 20  # Subtrai 20 de saúde do Player quando colide com um inimigo
-                            other.health = 0  # O inimigo desaparece após colidir com o Player
+                        if entity1.rect.colliderect(other.rect):
+                            entity1.health -= 30  # Subtrai saúde do jogador
+                            other.health = 0  # O tiro do inimigo desaparece
+                            to_remove.append(other)  # Marca o tiro para remoção
+                            break  # Impede múltiplas colisões com o mesmo tiro
 
-            # Colisões entre Tiro e Inimigo
-            if isinstance(test_entity, PlayerShot):
+                    elif isinstance(other, Enemy):
+                        if entity1.rect.colliderect(other.rect):
+                            entity1.health -= 50  # Subtrai saúde do jogador
+                            other.health = 0  # O inimigo desaparece após a colisão
+                            to_remove.append(other)  # Marca o inimigo para remoção
+                            break  # Impede múltiplas colisões com o mesmo inimigo
+
+            # Verificação de colisões com o tiro do jogador
+            if isinstance(entity1, PlayerShot):
                 for other in entity_list:
                     if isinstance(other, Enemy):
-                        if test_entity.rect.colliderect(other.rect):
-                            other.health -= 10  # Diminui a saúde do inimigo ao ser atingido pelo tiro
-                            test_entity.health = 0  # O tiro desaparece após atingir o inimigo
+                        if entity1.rect.colliderect(other.rect):
+                            other.health -= 10  # Reduzir saúde do inimigo
+                            entity1.health = 0  # O tiro desaparece
+                            to_remove.append(entity1)  # Marca o tiro para remoção
+                            break  # Impede múltiplas colisões com o mesmo tiro
+
+        # Remove as entidades marcadas para remoção
+        for entity in to_remove:
+            if entity in entity_list:
+                entity_list.remove(entity)
 
     @staticmethod
-    def verify_health(entity_list: list[Entity]):
-        # Verificar e remover entidades cuja saúde é igual ou inferior a 0
+    def verify_health(entity_list: list[Entity], explosion_sound):
+        to_remove = []
+
+        # Verificar as entidades e adicionar explosões quando necessário
         for entity in entity_list[:]:
             if entity.health <= 0:
-                if isinstance(entity, (Enemy, Player)):
-                    print(f"{entity.name} foi destruído!")
+                # Se a entidade é um Player ou Enemy, geramos uma explosão
+                if isinstance(entity, (Player, Enemy)):
+                    # Cria a explosão na posição da entidade
+                    explosion = Explosion(entity.rect.centerx, entity.rect.centery)
+                    entity_list.append(explosion)  # Adiciona a explosão à lista
+                    explosion_sound.play()  # Toca o som da explosão
+
+                    # Marca a entidade para remoção
+                    to_remove.append(entity)
+
+        # Remover entidades e explosões
+        for entity in to_remove:
+            if entity in entity_list:
                 entity_list.remove(entity)
+
+        # Verificar as explosões para remoção
+        for explosion in entity_list[:]:
+            if isinstance(explosion, Explosion):
+                if not explosion.update():  # Se a explosão terminou sua animação
+                    entity_list.remove(explosion)  # Remove a explosão da lista
