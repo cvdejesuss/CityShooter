@@ -57,7 +57,7 @@ class Level:
             # Printed text
             self.level_text(14, f'{self.name} - Timeout: {self.timeout / 1000 :.1f}s', COLOR_WHITE, (10, 5))
             #self.level_text(14, f'fps: {clock.get_fps():.0f}', COLOR_WHITE, (10, WIN_HEIGHT - 35))
-            #self.level_text(14, f'Entidades: {len(self.entity_list)}', COLOR_WHITE, (10, WIN_HEIGHT - 20))
+            #self.level_text(14, f'Entities: {len(self.entity_list)}', COLOR_WHITE, (10, WIN_HEIGHT - 20))
 
             # Display health of Player1 and Player2
             self.display_health()
@@ -70,25 +70,26 @@ class Level:
 
             pygame.display.flip()
 
-            # Collisions - Passando explosion_sound para verify_collision
+            # Collisions - Passing explosion_sound to verify_collision
             EntityMediator.verify_collision(entity_list=self.entity_list, explosion_sound=self.explosion_sound)
             EntityMediator.verify_health(entity_list=self.entity_list, explosion_sound=self.explosion_sound)
 
     def display_health(self):
-        y_offset = WIN_HEIGHT - 35  # Posição inicial para o primeiro jogador
-        spacing = 20  # Espaço entre os textos
+        y_offset = WIN_HEIGHT - 35  # Initial position for the first player
+        spacing = 20  # Space between texts
 
         for ent in self.entity_list:
             if isinstance(ent, Player):
                 health_text = f'{ent.name} Health: {ent.health}'
                 self.level_text(14, health_text, COLOR_WHITE, (10, y_offset))
-                y_offset += spacing  # Move a posição para o próximo jogador
+                y_offset += spacing  # Move the position for the next player
 
     def level_text(self, text_size: int, text: str, text_color: tuple, text_pos: tuple):
         text_font: Font = pygame.font.SysFont(name="Lucida Sans Typewriter", size=text_size)
         text_surf: Surface = text_font.render(text, True, text_color).convert_alpha()
         text_rect: Rect = text_surf.get_rect(left=text_pos[0], top=text_pos[1])
         self.window.blit(source=text_surf, dest=text_rect)
+
 
 
 

@@ -9,99 +9,100 @@ from code.Explosion import Explosion
 class EntityMediator:
     @staticmethod
     def __verify_collision_window(ent: Entity):
-        # Se a entidade passar da borda da tela, a saúde deve ser zerada
+        # If the entity passes the screen edge, health should be set to zero
         if isinstance(ent, Enemy):
-            if ent.rect.right <= 0:  # Se o inimigo saiu pela borda esquerda
+            if ent.rect.right <= 0:  # If the enemy went off the left edge
                 ent.health = 0
         elif isinstance(ent, PlayerShot):
-            if ent.rect.left > WIN_WIDTH:  # Se o tiro do jogador saiu pela borda direita
+            if ent.rect.left > WIN_WIDTH:  # If the player's shot went off the right edge
                 ent.health = 0
         elif isinstance(ent, EnemyShot):
-            if ent.rect.right <= 0:  # Se o tiro inimigo saiu pela borda esquerda
+            if ent.rect.right <= 0:  # If the enemy's shot went off the left edge
                 ent.health = 0
 
     @staticmethod
     def verify_collision(entity_list: list[Entity], explosion_sound):
-        to_remove = []  # Lista para marcar entidades a serem removidas
+        to_remove = []  # List to mark entities to be removed
 
         for i in range(len(entity_list)):
             entity1 = entity_list[i]
 
-            # Verificação de colisões
+            # Collision detection
             if isinstance(entity1, Player):
                 for other in entity_list:
                     if isinstance(other, EnemyShot):
                         if entity1.rect.colliderect(other.rect):
-                            # Aplica o dano do tiro inimigo no jogador
+                            # Apply the enemy's shot damage to the player
                             entity1.health -= ENTITY_DAMAGE[other.name]
-                            other.health = 0  # O tiro do inimigo desaparece
-                            to_remove.append(other)  # Marca o tiro para remoção
+                            other.health = 0  # The enemy's shot disappears
+                            to_remove.append(other)  # Marks the shot for removal
                     elif isinstance(other, Enemy):
                         if entity1.rect.colliderect(other.rect):
-                            # Aplica o dano do inimigo no jogador
+                            # Apply the enemy's damage to the player
                             entity1.health -= ENTITY_DAMAGE[other.name]
-                            other.health = 0  # O inimigo desaparece após a colisão
-                            # Criar a explosão no momento da colisão das naves
+                            other.health = 0  # The enemy disappears after the collision
+                            # Create the explosion when the ships collide
                             explosion = Explosion(other.rect.centerx, other.rect.centery)
-                            entity_list.append(explosion)  # Adiciona a explosão à lista
-                            explosion_sound.play()  # Toca o som da explosão
-                            to_remove.append(other)  # Marca o inimigo para remoção
+                            entity_list.append(explosion)  # Adds the explosion to the list
+                            explosion_sound.play()  # Plays the explosion sound
+                            to_remove.append(other)  # Marks the enemy for removal
 
-            # Colisões entre Tiro do jogador e Inimigos
+            # Collisions between Player's Shot and Enemies
             if isinstance(entity1, PlayerShot):
                 for other in entity_list:
                     if isinstance(other, Enemy):
                         if entity1.rect.colliderect(other.rect):
-                            # Aplica o dano do tiro do jogador no inimigo
+                            # Apply the player's shot damage to the enemy
                             other.health -= ENTITY_DAMAGE[entity1.name]
-                            entity1.health = 0  # O tiro desaparece
+                            entity1.health = 0  # The shot disappears
 
-                            # Se a saúde do inimigo for zero após o dano, cria a explosão
+                            # If the enemy's health is zero after damage, create the explosion
                             if other.health <= 0:
                                 explosion = Explosion(other.rect.centerx, other.rect.centery)
-                                entity_list.append(explosion)  # Adiciona a explosão à lista
-                                explosion_sound.play()  # Toca o som da explosão
-                            to_remove.append(entity1)  # Marca o tiro para remoção
+                                entity_list.append(explosion)  # Adds the explosion to the list
+                                explosion_sound.play()  # Plays the explosion sound
+                            to_remove.append(entity1)  # Marks the shot for removal
 
-        # Remover as entidades marcadas para remoção
+        # Remove entities marked for removal
         for entity in to_remove:
             if entity in entity_list:
                 entity_list.remove(entity)
 
     @staticmethod
     def verify_health(entity_list: list[Entity], explosion_sound):
-        to_remove = []  # Lista para as entidades que precisam ser removidas
+        to_remove = []  # List for entities that need to be removed
 
-        # Verificar as entidades e adicionar explosões quando necessário
+        # Check entities and add explosions when necessary
         for entity in entity_list[:]:
             if entity.health <= 0:
-                # Se a entidade é um Player ou Enemy, geramos uma explosão
+                # If the entity is a Player or Enemy, generate an explosion
                 if isinstance(entity, (Player, Enemy)):
-                    # Cria a explosão na posição da entidade
+                    # Create the explosion at the entity's position
                     explosion = Explosion(entity.rect.centerx, entity.rect.centery)
-                    entity_list.append(explosion)  # Adiciona a explosão à lista
-                    explosion_sound.play()  # Toca o som da explosão
+                    entity_list.append(explosion)  # Adds the explosion to the list
+                    explosion_sound.play()  # Plays the explosion sound
 
-                    # Marca a entidade para remoção
+                    # Marks the entity for removal
                     to_remove.append(entity)
 
-                # Adicionar explosão para o jogador
+                # Add explosion for the player
                 if isinstance(entity, Player) and entity.health <= 0:
-                    # Cria a explosão da nave do jogador
+                    # Create the player's ship explosion
                     explosion = Explosion(entity.rect.centerx, entity.rect.centery)
-                    entity_list.append(explosion)  # Adiciona a explosão à lista
-                    explosion_sound.play()  # Toca o som da explosão
-                    to_remove.append(entity)  # Marca a nave do jogador para remoção
+                    entity_list.append(explosion)  # Adds the explosion to the list
+                    explosion_sound.play()  # Plays the explosion sound
+                    to_remove.append(entity)  # Marks the player's ship for removal
 
-        # Remover entidades e explosões
+        # Remove entities and explosions
         for entity in to_remove:
             if entity in entity_list:
                 entity_list.remove(entity)
 
-        # Verificar as explosões para remoção
+        # Check explosions for removal
         for explosion in entity_list[:]:
             if isinstance(explosion, Explosion):
-                if not explosion.update():  # Se a explosão terminou sua animação
-                    entity_list.remove(explosion)  # Remove a explosão da lista
+                if not explosion.update():  # If the explosion finished its animation
+                    entity_list.remove(explosion)  # Removes the explosion from the list
+
 
 
